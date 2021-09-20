@@ -1,0 +1,79 @@
+Sub CastCheck()
+Dim R As Range
+Dim Col As Range
+Dim TempSum As Double
+Dim i As Integer
+Dim SubTotal As Double
+Dim SmallSubTotal As Double
+Dim TempChecking As Double
+Dim SubCell As Range
+For Each Col In Selection.Columns
+    SubTotal = 0
+    For Each R In Col.Cells
+        i = 1
+        'Calculate Subtotal
+        If (R.Interior.Color = vbGreen) And (R.Font.Color = vbBlack) Then SubTotal = SubTotal + R.Value
+        If Application.WorksheetFunction.IsNumber(R.Offset(1, 0).Value) Then
+            TempChecking = R.Offset(1, 0).Value
+        Else
+            TempChecking = 0
+        End If
+        
+        'Case0: Include all numbers but not subtotal
+        TempSum = Round(Application.WorksheetFunction.Sum(Range(Col.Cells(i), R)) - SubTotal, 2)
+        'Turn red if diff less than 5 and it's a number
+        If Round(TempChecking, 2) <> 0 And Application.WorksheetFunction.IsNumber(TempChecking) Then
+            If Abs((Round(TempChecking, 2) - Round(TempSum, 2)) / TempChecking) < 0.01 Then
+                If R.Offset(1, 0).Interior.Color <> vbGreen Then R.Offset(1, 0).Interior.Color = vbRed
+            End If
+        End If
+        'Turn green if no diff and it's a number
+        If Round(TempChecking, 2) = TempSum Then
+            If Application.WorksheetFunction.IsNumber(R.Offset(1, 0).Value) = True Then
+                R.Offset(1, 0).Interior.Color = vbGreen
+            End If
+        End If
+            
+        Do While (TempSum <> Round(TempChecking, 2)) And (Col.Cells(i).Address <> R.Offset(1, 0).Address)
+            'Refress SmallSubTotal each time it changed the Sum function
+            SmallSubTotal = 0
+            For Each SubCell In Range(Col.Cells(i), R)
+                If (SubCell.Interior.Color = vbGreen) And (SubCell.Font.Color = vbBlack) Then SmallSubTotal = SmallSubTotal + SubCell.Value
+            Next SubCell
+            
+            'Case1: Include some numbers but not subtotal
+            TempSum = Round(Application.WorksheetFunction.Sum(Range(Col.Cells(i), R)) - SmallSubTotal, 2) 'Subtotal to SmallSubTotal
+            'Turn red if diff less than 5 and it's a number
+            If Round(TempChecking, 2) <> 0 And Application.WorksheetFunction.IsNumber(TempChecking) Then
+                If Abs((Round(TempChecking, 2) - Round(TempSum, 2)) / TempChecking) < 0.01 Then
+                    If R.Offset(1, 0).Interior.Color <> vbGreen Then R.Offset(1, 0).Interior.Color = vbRed
+                End If
+            End If
+            'Turn green for Case 1
+            If Round(TempChecking, 2) = TempSum Then
+                If Application.WorksheetFunction.IsNumber(R.Offset(1, 0).Value) = True Then
+                    R.Offset(1, 0).Interior.Color = vbGreen
+                End If
+            End If
+            
+            'Case2: do not include all numbers above subtotal
+            TempSum = Round(Application.WorksheetFunction.Sum(Range(Col.Cells(i), R)), 2)
+            'Turn red if diff less than 5 and it's a number
+            If Round(TempChecking, 2) <> 0 And Application.WorksheetFunction.IsNumber(TempChecking) Then
+                If Abs((Round(TempChecking, 2) - Round(TempSum, 2)) / TempChecking) < 0.01 Then
+                    If R.Offset(1, 0).Interior.Color <> vbGreen Then R.Offset(1, 0).Interior.Color = vbRed
+                End If
+            End If
+            'Turn green for Case 2
+            If Round(TempChecking, 2) = TempSum Then
+                If Application.WorksheetFunction.IsNumber(R.Offset(1, 0).Value) = True Then
+                    R.Offset(1, 0).Interior.Color = vbGreen
+                End If
+            
+            End If
+            
+            i = i + 1
+        Loop
+    Next R
+Next Col
+End Sub
